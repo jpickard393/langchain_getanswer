@@ -1,0 +1,11 @@
+openai
+langchain
+unstructured
+RecursiveCharacterTextSplitter
+pinecone-client==2.2.2
+tiktoken
+# aws library
+boto3==1.28.46
+
+#  Python library that loads environment variables from a .env file
+python-dotenv==1.0.0
