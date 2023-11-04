@@ -13,15 +13,16 @@ def main():
     load_dotenv(find_dotenv())
     print("Starting to Load Data")
 
-    # chunkSize = 100
-    # load_data(chunkSize)
+    chunkSize = 100
+    load_data(chunkSize)
     query = "what is an Andi"
     askQuestion(query)
 
 
 def load_data(chunkSize):
     try:
-        loader = UnstructuredCSVLoader("./RFPQuestion.csv", mode="elements")
+        loader = UnstructuredCSVLoader(
+            "./Files/RFPQuestion.csv", mode="elements")
         data = loader.load()
         print(f'You have {len(data)} documents in your data')
         print(
