@@ -10,41 +10,44 @@ from langchain.chains.question_answering import load_qa_chain
 
 
 def main():
+    load_dotenv(find_dotenv())
     print("Starting to Load Data")
-    load_data()
+
+    # chunkSize = 100
+    # load_data(chunkSize)
+    query = "what is an Andi"
+    askQuestion(query)
 
 
-def load_data():
+def load_data(chunkSize):
     try:
-        loader = UnstructuredCSVLoader("./RFPQuestion.csv", mode="elements")
+        loader = UnstructuredCSVLoader(
+            "./Files/RFPQuestion.csv", mode="elements")
         data = loader.load()
-        print(f'You have {len(data)} documents in your data')
-        print(
-            f'There are {len(data[0].page_content)} characters in your document')
-        chunk_data(data)
+        chunk_data(data, chunkSize)
+
+        print(f'You have {len(data)} chunks in your data')
     except Exception as err:
         print(err)
 
 
-def chunk_data(data):
+def chunk_data(data, chunkSize):
     print("Chunking...")
 
     try:
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=100, chunk_overlap=0)
+            chunk_size=chunkSize, chunk_overlap=0)
 
         chunks = text_splitter.split_documents(data)
         print(f'Now you have {len(chunks)} documents')
 
-        # do_Embeddings(chunks)
-        generate_Natural_Language_Response(chunks)
+        insert_embeddings(chunks)
+
     except Exception as ex:
         print(ex)
 
 
-def generate_answer_from_pinecone(chunks):
-    # only uses pinecone for an answer not NLP
-
+def insert_embeddings(chunks):
     print("Doing Embeddings...")
 
     try:
@@ -61,40 +64,27 @@ def generate_answer_from_pinecone(chunks):
         )
         index_name = indexName
 
-        docsearch = Pinecone.from_texts([t.page_content for t in chunks],
-                                        embeddings,
-                                        index_name=index_name)
+        # create the embeddings from the chunks
+        Pinecone.from_texts([t.page_content for t in chunks],
+                            embeddings,
+                            index_name=index_name)
 
-        query = "what is a club"
-        results = docsearch.similarity_search(query)
-        print(results)
-    except Exception as ex:
-        print(ex)
+    except Exception as err:
+        print(err)
 
 
-def generate_Natural_Language_Response(chunks):
+def askQuestion(query):
     print("Doing Natural Language Search...")
+
     try:
-        load_dotenv(find_dotenv())
         openAI_key = os.environ.get("OPENAI_KEY")
-        pinecne_api_key = os.environ.get("PINECONE_API_KEY")
         indexName = os.environ.get("INDEX_NAME")
         embeddings = OpenAIEmbeddings(openai_api_key=openAI_key)
 
         llm = OpenAI(temperature=0, openai_api_key=openAI_key)
         chain = load_qa_chain(llm, chain_type="stuff")
-        query = "how many clients does a club have"
 
-        # initialize pinecone
-        pinecone.init(
-            api_key=pinecne_api_key,
-            environment=os.environ.get("PINECONE_ENVIRONMENT"),
-        )
-
-        index_name = indexName
-        docsearch = Pinecone.from_texts([t.page_content for t in chunks],
-                                        embeddings,
-                                        index_name=index_name)
+        docsearch = Pinecone.from_existing_index(indexName, embeddings)
 
         docs = docsearch.similarity_search(query)
         answer = chain.run(input_documents=docs, question=query)
