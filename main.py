@@ -13,8 +13,8 @@ def main():
     load_dotenv(find_dotenv())
     print("Starting to Load Data")
 
-    chunkSize = 100
-    load_data(chunkSize)
+    # chunkSize = 100
+    # load_data(chunkSize)
     query = "what is an Andi"
     askQuestion(query)
 
@@ -24,10 +24,9 @@ def load_data(chunkSize):
         loader = UnstructuredCSVLoader(
             "./Files/RFPQuestion.csv", mode="elements")
         data = loader.load()
-        print(f'You have {len(data)} documents in your data')
-        print(
-            f'There are {len(data[0].page_content)} characters in your document')
         chunk_data(data, chunkSize)
+
+        print(f'You have {len(data)} chunks in your data')
     except Exception as err:
         print(err)
 
